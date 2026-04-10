@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>個人情報まもるくん ～ネットの落とし穴～</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&family=Kosugi+Maru&display=swap');
+
+  :root {
+    --bg: #0f1b2d;
+    --card: #162236;
+    --card2: #1e3050;
+    --accent: #00d4ff;
+    --danger: #ff4d6d;
+    --safe: #00e5a0;
+    --warn: #ffbe00;
+    --text: #e8f4ff;
+    --muted: #7a9ab5;
+    --border: #2a4a6b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(0,212,255,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,77,109,0.07) 0%, transparent 50%);
+  }
+
+  #app {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen {
+    text-align: center;
+    animation: fadeIn 0.8s ease;
+  }
+
+  .game-logo {
+    font-size: clamp(28px, 6vw, 46px);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .game-logo span.accent { color: var(--accent); }
+  .game-logo span.danger { color: var(--danger); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+    letter-spacing: 0.05em;
+  }
+
+  .shield-icon {
+    font-size: 80px;
+    margin: 0 auto 24px;
+    display: block;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+  }
+
+  .intro-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c5ddf0;
+  }
+  .intro-box strong { color: var(--accent); }
+
+  .score-summary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .score-badge {
+    background: var(--card2);
+    border-radius: 12px;
+    padding: 12px 20px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+  }
+  .score-badge .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .score-badge .value { font-size: 28px; font-weight: 800; color: var(--accent); }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-block;
+    padding: 14px 36px;
+    border-radius: 50px;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #0099cc);
+    color: #0a1520;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.4);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 28px rgba(0,212,255,0.6); }
+
+  .btn-safe {
+    background: linear-gradient(135deg, var(--safe), #00b377);
+    color: #0a1520;
+    box-shadow: 0 4px 16px rgba(0,229,160,0.35);
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, var(--danger), #cc2244);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(255,77,109,0.35);
+  }
+  .btn-warn {
+    background: linear-gradient(135deg, var(--warn), #e5a000);
+    color: #1a0f00;
+    box-shadow: 0 4px 16px rgba(255,190,0,0.35);
+  }
+  .btn-neutral {
+    background: var(--card2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-neutral:hover { background: #2a4a6b; }
+
+  /* ===== GAME SCREEN ===== */
+  #game-screen { animation: fadeIn 0.5s ease; }
+
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .progress-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: var(--card2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #0099cc);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .q-count { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+  .lives {
+    text-align: right;
+    font-size: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 4px;
+  }
+
+  .scenario-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .scenario-tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 50px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .scenario-situation {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+
+  .scenario-question {
+    font-size: clamp(15px, 3.5vw, 18px);
+    font-weight: 700;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .chat-bubble {
+    background: var(--card2);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    padding: 14px 16px;
+    margin: 14px 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #c5ddf0;
+  }
+  .chat-bubble .speaker {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    text-align: left;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    transform: translateX(4px);
+  }
+  .choice-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+  .choice-btn.correct { border-color: var(--safe); background: rgba(0,229,160,0.12); }
+  .choice-btn.wrong   { border-color: var(--danger); background: rgba(255,77,109,0.12); }
+  .choice-letter {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--card2);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ===== FEEDBACK ===== */
+  .feedback-box {
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 16px;
+    animation: slideUp 0.3s ease;
+  }
+  .feedback-box.correct-fb { background: rgba(0,229,160,0.12); border: 1px solid rgba(0,229,160,0.3); }
+  .feedback-box.wrong-fb   { background: rgba(255,77,109,0.12); border: 1px solid rgba(255,77,109,0.3); }
+
+  .feedback-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  .feedback-title.ok { color: var(--safe); }
+  .feedback-title.ng { color: var(--danger); }
+
+  .feedback-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #c5ddf0;
+    margin-bottom: 16px;
+  }
+  .tip-box {
+    background: rgba(255,190,0,0.1);
+    border: 1px solid rgba(255,190,0,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--warn);
+    line-height: 1.7;
+  }
+  .tip-box strong { font-weight: 800; }
+
+  /* ===== RESULT SCREEN ===== */
+  #result-screen { text-align: center; animation: fadeIn 0.6s ease; }
+
+  .result-icon { font-size: 72px; margin-bottom: 16px; }
+  .result-title {
+    font-size: clamp(22px, 5vw, 34px);
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .result-subtitle { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+  .result-score-big {
+    font-size: clamp(52px, 12vw, 80px);
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .result-score-label { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+  .result-breakdown {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-row .r-label { color: var(--muted); }
+  .breakdown-row .r-val { font-weight: 700; }
+  .breakdown-row .r-val.safe { color: var(--safe); }
+  .breakdown-row .r-val.danger { color: var(--danger); }
+
+  .rank-box {
+    background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,212,255,0.05));
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .rank-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .rank-title { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .rank-desc { font-size: 13px; color: #a0c4dc; line-height: 1.7; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE -->
+  <div id="title-screen">
+    <span class="shield-icon">🛡️</span>
+    <div class="game-logo">
+      <span class="accent">個人情報</span>まもるくん<br>
+      <span style="font-size:0.6em; color: var(--danger);">〜ネットの落とし穴〜</span>
+    </div>
+    <p class="subtitle">情報モラル シナリオゲーム｜中学生向け</p>
+    <div class="intro-box">
+      あなたは中学生のユウタ。<br>
+      毎日スマホを使っていろんなサービスを利用しているけど…<br>
+      <strong>個人情報をうっかり漏らしてしまう危険</strong>がひそんでいる！<br><br>
+      全 <strong>10のシナリオ</strong> で正しい選択をして、<br>自分の情報を守り抜こう！
+    </div>
+    <button class="btn btn-primary" onclick="startGame()">ゲームスタート →</button>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="hidden">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <span class="q-count" id="q-count">1 / 7</span>
+    </div>
+    <div class="lives" id="lives-display"></div>
+
+    <div class="scenario-card">
+      <span class="scenario-tag" id="s-tag">SNS</span>
+      <div class="scenario-situation" id="s-situation"></div>
+      <div class="scenario-question" id="s-question"></div>
+      <div class="chat-bubble hidden" id="s-chat">
+        <div class="speaker" id="s-chat-speaker"></div>
+        <div id="s-chat-text"></div>
+      </div>
+    </div>
+
+    <div class="choices" id="choices-wrap"></div>
+    <div id="feedback-area"></div>
+    <div id="next-btn-wrap" style="text-align:center; margin-top:20px;"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-screen" class="hidden"></div>
+</div>
+
+<script>
+const scenarios = [
+  {
+    tag: "SNS投稿",
+    situation: "ユウタは友達と放課後に出かけた写真をInstagramに投稿しようとしている。",
+    question: "写真にはユウタの制服（学校名入り）と、背景に自宅近くの交差点の看板が写っている。どうする？",
+    chat: null,
+    choices: [
+      { label: "そのまま投稿する", correct: false },
+      { label: "学校名と看板部分をトリミングまたはスタンプで隠してから投稿する", correct: true },
+      { label: "友達だけが見られる「非公開」設定なので問題ない", correct: false },
+    ],
+    feedback_correct: "正解！制服の学校名や地名がわかる背景は、住所特定につながる危険があります。",
+    feedback_wrong: "不正解…制服の学校名や背景の看板から、学校名・自宅の場所が特定されてしまうことがあります。",
+    tip: "💡 SNSの「非公開」設定でも、フォロワーが画面キャプチャを共有することがあります。写真に含まれる情報をよく確認してから投稿しましょう。",
+  },
+  {
+    tag: "オンラインゲーム",
+    situation: "ユウタはオンラインゲームで知り合った「たくや」と仲良くなった。",
+    question: "「たくや」から「もっと仲良くなりたい！本名とLINEのID教えてよ」とメッセージが来た。どうする？",
+    chat: { speaker: "たくや（ゲーム内）", text: "ゲームの中だけじゃもったいない！本名とLINEのID教えてよ、友達登録したい😊" },
+    choices: [
+      { label: "仲良しだから本名とIDを教える", correct: false },
+      { label: "「ゲーム内のやりとりだけにしたい」と断る", correct: true },
+      { label: "本名は教えずLINEのIDだけ教える", correct: false },
+    ],
+    feedback_correct: "正解！ゲームで仲良くなった相手でも、実際にどんな人かはわかりません。",
+    feedback_wrong: "不正解…ゲームで仲良くなった相手の素性は確認できません。",
+    tip: "💡 ネット上で知り合った人に本名・電話番号・SNSのIDを教えることはリスクがあります。「会ったことがない人＝知らない人」という意識が大切です。",
+  },
+  {
+    tag: "プレゼント詐欺",
+    situation: "スマホに「おめでとう！抽選に当選しました」というメッセージが届いた。",
+    question: "「商品を送るために住所と生年月日を教えてください」と書いてある。どうする？",
+    chat: { speaker: "メッセージ", text: "🎉 あなたはギフト券1万円分に当選しました！受け取るには氏名・住所・生年月日をこちらに送ってください。期限は24時間！" },
+    choices: [
+      { label: "当選は本物だと思うので、情報を送る", correct: false },
+      { label: "「応募した覚えがないので怪しい」と思い、無視・ブロックする", correct: true },
+      { label: "住所だけ教えて、生年月日は教えない", correct: false },
+    ],
+    feedback_correct: "正解！応募していない懸賞に当選するはずがありません。これは詐欺の典型的な手口です。",
+    feedback_wrong: "不正解…これはフィッシング詐欺・個人情報収集の典型的な手口です。",
+    tip: "💡 「当選」「無料プレゼント」「急いで！」というキーワードは詐欺のサインです。個人情報を求めるメッセージは、必ず保護者や先生に相談しましょう。",
+  },
+  {
+    tag: "アプリの権限",
+    situation: "ユウタは人気の無料ゲームアプリをダウンロードしようとしている。",
+    question: "インストール時に「連絡先・位置情報・カメラへのアクセス」の許可を求めてきた。どうする？",
+    chat: null,
+    choices: [
+      { label: "無料だし人気アプリだから全部「許可」する", correct: false },
+      { label: "ゲームに必要ない権限（連絡先・位置情報）は「許可しない」にする", correct: true },
+      { label: "アプリを使いたいので全部許可するが、後で設定を確認する", correct: false },
+    ],
+    feedback_correct: "正解！アプリに必要以上の権限を与えると、意図しない情報が収集される可能性があります。",
+    feedback_wrong: "不正解…アプリの機能に不要なアクセス権限を許可すると、個人情報が外部に送られる可能性があります。",
+    tip: "💡 「このアプリになぜこの権限が必要？」と考える習慣をつけましょう。ゲームアプリが連絡先にアクセスする理由はほとんどありません。",
+  },
+  {
+    tag: "パスワード管理",
+    situation: "ユウタはいくつかのサービスに登録している。",
+    question: "友人から「パスワード管理ってどうしてる？」と聞かれた。ユウタのやり方で安全なのはどれ？",
+    chat: null,
+    choices: [
+      { label: "全サービスで同じパスワードを使っている（覚えやすいから）", correct: false },
+      { label: "サービスごとに異なるパスワードを設定し、パスワード管理アプリを使っている", correct: true },
+      { label: "自分の誕生日をパスワードにしている（忘れないから）", correct: false },
+    ],
+    feedback_correct: "正解！パスワードの使い回しは、1か所で情報漏洩が起きると他のサービスにも被害が広がります。",
+    feedback_wrong: "不正解…同じパスワードや誕生日は非常に危険です。",
+    tip: "💡 パスワードは「長く・複雑で・サービスごとに異なる」ことが基本。覚えきれない場合はパスワード管理アプリ（保護者に相談しながら）の利用が効果的です。",
+  },
+  {
+    tag: "友達の情報",
+    situation: "クラスメートのサクラから「部活の連絡先一覧を写真で撮って送って」と頼まれた。",
+    question: "連絡先一覧には部員全員の名前・電話番号が書いてある。どうする？",
+    chat: { speaker: "サクラ（クラスメート）", text: "部活の連絡先リスト、スマホに入ってないんだよね。写真撮ってLINEで送ってくれない？" },
+    choices: [
+      { label: "仲の良いクラスメートだし、写真を撮ってLINEで送る", correct: false },
+      { label: "「他の人の個人情報だから写真は送れない、担任の先生に聞いてみて」と伝える", correct: true },
+      { label: "名前だけにして電話番号は消してから送る", correct: false },
+    ],
+    feedback_correct: "正解！他人の個人情報を本人の同意なくシェアすることは、プライバシーの侵害になります。",
+    feedback_wrong: "不正解…他の部員は「自分の電話番号をシェアされること」に同意していません。",
+    tip: "💡 「自分の情報じゃないから大丈夫」は間違いです。他の人の個人情報は、その人の許可なく第三者に渡してはいけません。",
+  },
+  {
+    tag: "位置情報",
+    situation: "ユウタはリアルタイムで自分の場所を共有できるアプリを使おうとしている。",
+    question: "友達グループで「お互いの現在地を共有しよう！」という話になった。どうする？",
+    chat: { speaker: "友達グループ", text: "このアプリ、みんなの今いる場所がリアルタイムでわかるよ！グループに入ろうよ〜" },
+    choices: [
+      { label: "面白そうだし、友達だけだから全員と位置情報を共有する", correct: false },
+      { label: "まず保護者に相談してから、信頼できる範囲で設定する", correct: true },
+      { label: "グループには入るが、位置情報の共有はオフにしておく", correct: false },
+    ],
+    feedback_correct: "正解！位置情報の共有は「今どこにいるか」「いつ家にいるか」がわかるため、慎重な判断が必要です。",
+    feedback_wrong: "不正解…位置情報は行動パターンや帰宅時間など、非常にプライベートな情報を含みます。",
+    tip: "💡 リアルタイム位置情報の共有は、ストーキングや犯罪に悪用されるリスクがあります。使う前に必ず保護者と相談し、設定を確認しましょう。",
+  },
+  {
+    tag: "闇バイト勧誘",
+    situation: "ユウタのInstagramに知らないアカウントからDMが届いた。",
+    question: "「1日5万円稼げる超かんたんな仕事！学生歓迎。まず住所と名前を教えて」というメッセージが来た。どうする？",
+    chat: { speaker: "知らないアカウント（DM）", text: "📦 荷物を受け取って転送するだけで1日5万円！簡単すぎｗ 学生でもOK。まず住所と本名教えてくれれば詳しく説明するよ！" },
+    choices: [
+      { label: "簡単に稼げそうだし、住所と名前を教えて詳しく聞いてみる", correct: false },
+      { label: "怪しいと思い、無視してアカウントをブロック・通報する", correct: true },
+      { label: "名前だけ教えて、住所は教えない", correct: false },
+    ],
+    feedback_correct: "正解！これは「荷物の受け取り・転送」を使った闇バイト勧誘の典型的な手口です。",
+    feedback_wrong: "不正解…「かんたんに高額報酬」は闇バイト勧誘の定番フレーズです。住所や名前を教えると、犯罪に巻き込まれる危険があります。",
+    tip: "💡 闇バイトは「受け子」「出し子」など、知らないうちに犯罪の実行役にさせられます。一度個人情報を渡すと脅しに使われ、断れなくなることも。「うまい話」は疑うことが大切です。",
+  },
+  {
+    tag: "アカウント乗っ取り",
+    situation: "ユウタのスマホに「Instagramセキュリティチームです」というDMが届いた。",
+    question: "「あなたのアカウントに不正アクセスの疑いがあります。確認のため認証コードを教えてください」と書いてある。どうする？",
+    chat: { speaker: "Instagram Security（DM）", text: "⚠️ 重要：あなたのアカウントに不正ログインの試みが検出されました。アカウントを守るため、今すぐSMSで届いた6桁の認証コードをこちらに送ってください。" },
+    choices: [
+      { label: "公式っぽいから信じて、SMSの認証コードを送る", correct: false },
+      { label: "公式サービスは認証コードをDMで聞くことはないと知っているので無視する", correct: true },
+      { label: "本物か確かめるため、コードの最初の3桁だけ教える", correct: false },
+    ],
+    feedback_correct: "正解！公式サービスがDMやメールで認証コードを要求することは絶対にありません。",
+    feedback_wrong: "不正解…これはアカウント乗っ取りの定番手口「フィッシング」です。認証コードを渡した瞬間にアカウントを奪われます。",
+    tip: "💡 SMS認証コードは「合鍵」と同じ。絶対に誰にも教えてはいけません。「公式を名乗るDM」は99%偽物です。不安なら公式アプリのサポートページから直接確認しましょう。",
+  },
+  {
+    tag: "AIとプライバシー",
+    situation: "ユウタはAIチャットアプリを使って宿題の悩みを相談しようとしている。",
+    question: "友達から「AIって便利だよね、なんでも話せる！」と言われた。ユウタが入力しようとしている内容で、最も注意が必要なのはどれ？",
+    chat: { speaker: "友達", text: "AIチャット最近使ってる？なんでも答えてくれるし、悩みとか全部話しちゃってるｗ 個人的なことも気にせず入力してるよ〜" },
+    choices: [
+      { label: "「明日の数学のテスト範囲を教えて」と勉強の質問をする", correct: false },
+      { label: "「自分の名前・学校名・家族の悩みをまとめて相談する」と個人情報を含めて入力する", correct: true },
+      { label: "「ストレスを減らす方法を教えて」と一般的な質問をする", correct: false },
+    ],
+    feedback_correct: "正解！AIに入力した情報は、サービスの改善などに使われる場合があります。個人が特定できる情報は入力しないことが大切です。",
+    feedback_wrong: "不正解…AIチャットに名前・学校名・家族の情報などを入力すると、そのデータがサーバーに保存・利用される可能性があります。",
+    tip: "💡 AIサービスに入力した内容は「学習データ」として使われることがあります。本名・住所・学校名・家族の個人情報は入力しないようにしましょう。便利なツールほど、使い方に注意が必要です。",
+  },
+];
+
+let currentQ = 0;
+let score = 0;
+let lives = 3;
+let answered = [];
+
+function startGame() {
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+  currentQ = 0; score = 0; lives = 3; answered = [];
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const s = scenarios[currentQ];
+  const total = scenarios.length;
+
+  document.getElementById('progress-fill').style.width = ((currentQ / total) * 100) + '%';
+  document.getElementById('q-count').textContent = `${currentQ + 1} / ${total}`;
+  updateLives();
+
+  document.getElementById('s-tag').textContent = s.tag;
+  document.getElementById('s-situation').textContent = s.situation;
+  document.getElementById('s-question').textContent = s.question;
+
+  const chatEl = document.getElementById('s-chat');
+  if (s.chat) {
+    chatEl.classList.remove('hidden');
+    document.getElementById('s-chat-speaker').textContent = s.chat.speaker;
+    document.getElementById('s-chat-text').textContent = s.chat.text;
+  } else {
+    chatEl.classList.add('hidden');
+  }
+
+  const letters = ['A', 'B', 'C'];
+  const wrap = document.getElementById('choices-wrap');
+  wrap.innerHTML = '';
+  s.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-letter">${letters[i]}</span><span>${c.label}</span>`;
+    btn.onclick = () => selectChoice(i);
+    wrap.appendChild(btn);
+  });
+
+  document.getElementById('feedback-area').innerHTML = '';
+  document.getElementById('next-btn-wrap').innerHTML = '';
+}
+
+function updateLives() {
+  const el = document.getElementById('lives-display');
+  el.textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+}
+
+function selectChoice(idx) {
+  const s = scenarios[currentQ];
+  const chosen = s.choices[idx];
+  const btns = document.querySelectorAll('.choice-btn');
+
+  btns.forEach(b => b.disabled = true);
+  btns.forEach((b, i) => {
+    if (s.choices[i].correct) b.classList.add('correct');
+  });
+  if (!chosen.correct) {
+    btns[idx].classList.add('wrong');
+    lives = Math.max(0, lives - 1);
+    updateLives();
+  } else {
+    score++;
+  }
+
+  answered.push({ correct: chosen.correct });
+
+  const fb = document.getElementById('feedback-area');
+  const isCorrect = chosen.correct;
+  fb.innerHTML = `
+    <div class="feedback-box ${isCorrect ? 'correct-fb' : 'wrong-fb'}">
+      <div class="feedback-title ${isCorrect ? 'ok' : 'ng'}">${isCorrect ? '✅ 正解！' : '❌ 不正解…'}</div>
+      <div class="feedback-text">${isCorrect ? s.feedback_correct : s.feedback_wrong}</div>
+      <div class="tip-box">${s.tip}</div>
+    </div>
+  `;
+
+  const nextWrap = document.getElementById('next-btn-wrap');
+  const isLast = currentQ === scenarios.length - 1;
+  nextWrap.innerHTML = `
+    <button class="btn btn-primary" onclick="${isLast ? 'showResult()' : 'nextQuestion()'}">${isLast ? '結果を見る 🏆' : '次のシナリオへ →'}</button>
+  `;
+
+  if (lives === 0 && !isLast) {
+    nextWrap.innerHTML = `
+      <p style="color:var(--danger); margin-bottom:12px; font-weight:700;">ライフがなくなりました…</p>
+      <button class="btn btn-primary" onclick="showResult()">結果を見る 🏆</button>
+    `;
+  }
+}
+
+function nextQuestion() {
+  currentQ++;
+  renderQuestion();
+}
+
+function showResult() {
+  document.getElementById('game-screen').classList.add('hidden');
+  const rs = document.getElementById('result-screen');
+  rs.classList.remove('hidden');
+
+  const total = scenarios.length;
+  const pct = Math.round((score / total) * 100);
+  const correct = answered.filter(a => a.correct).length;
+  const wrong = answered.filter(a => !a.correct).length;
+
+  let rank, icon, desc;
+  if (pct >= 86) {
+    rank = "情報セキュリティマスター"; icon = "🏆";
+    desc = "完璧な判断力！個人情報の扱いについて深く理解しています。友達にも教えてあげよう。";
+  } else if (pct >= 57) {
+    rank = "情報モラル中級者"; icon = "🛡️";
+    desc = "なかなか良い判断ができています。間違えた問題を振り返って、さらに知識を深めよう。";
+  } else {
+    rank = "要注意ユーザー"; icon = "⚠️";
+    desc = "個人情報について、もう少し学ぶ必要がありそうです。もう一度挑戦してみよう！";
+  }
+
+  rs.innerHTML = `
+    <div class="result-icon">${icon}</div>
+    <div class="result-title">${pct >= 86 ? '完璧！' : pct >= 57 ? 'よくできました！' : 'もう一度挑戦しよう'}</div>
+    <div class="result-subtitle">全${total}シナリオ クリア</div>
+    <div class="result-score-big">${score}<span style="font-size:0.45em; color:var(--muted)"> / ${total}</span></div>
+    <div class="result-score-label">正解数</div>
+
+    <div class="result-breakdown">
+      <div class="breakdown-row">
+        <span class="r-label">正解</span>
+        <span class="r-val safe">✅ ${correct}問</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="r-label">不正解</span>
+        <span class="r-val danger">❌ ${wrong}問</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="r-label">正答率</span>
+        <span class="r-val" style="color:var(--accent)">${pct}%</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="r-label">残りライフ</span>
+        <span class="r-val">${'❤️'.repeat(lives)}${'🖤'.repeat(3-lives)}</span>
+      </div>
+    </div>
+
+    <div class="rank-box">
+      <div class="rank-label">あなたのランク</div>
+      <div class="rank-title">${rank}</div>
+      <div class="rank-desc">${desc}</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="resetGame()">もう一度挑戦する 🔄</button>
+  `;
+}
+
+function resetGame() {
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('title-screen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
